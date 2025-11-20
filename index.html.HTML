@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Extrator de H2 para Excel</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 10px 30px 10px;
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+    .container {
+      background-color: #2d2d2d;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 32px;
+      font-size: 2.1rem;
+    }
+    .layout {
+      display: flex;
+      gap: 30px;
+      width: 100%;
+      justify-content: space-between;
+      align-items: stretch;
+    }
+    textarea, .output-markdown {
+      font-family: monospace;
+      font-size: 16px;
+      padding: 15px;
+    }
+    textarea {
+      flex: 1 1 53%;
+      min-height: 380px;
+      max-height: 700px;
+      border: 2px solid #444;
+      border-radius: 6px;
+      resize: vertical;
+      background-color: #16181a;
+      color: #e0e0e0;
+      box-sizing: border-box;
+    }
+    .output-column {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 47%;
+      min-width: 320px;
+      max-width: 100%;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .output-markdown {
+      border: 2px solid #444;
+      border-radius: 6px;
+      background-color: #111;
+      color: #4CAF50;
+      min-height: 180px;
+      max-height: 700px;
+      margin-bottom: 4px;
+      box-sizing: border-box;
+      width: 100%;
+      resize: vertical;
+    }
+    .output-markdown[readonly] {
+      cursor: pointer;
+      background-color: #0a0d0c;
+    }
+    .side-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .side-buttons a, .side-buttons button {
+      width: 100%;
+      max-width: 367px;
+      padding: 14px 0;
+      margin-bottom: 0;
+      text-align: center;
+      font-size: 17px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      font-weight: 700;
+      transition: background 0.3s, color 0.2s, box-shadow 0.2s;
+      letter-spacing: 1.1px;
+      text-transform: uppercase;
+    }
+    .side-buttons .copiar-lista {
+      background: linear-gradient(90deg, #42e695 10%, #3bb2b8 90%);
+      color: #fff;
+      box-shadow: 0 2px 10px 0 rgba(60,220,130,0.10);
+      border: 2px solid #2ec49c;
+    }
+    .side-buttons .copiar-lista:hover {
+      background: linear-gradient(90deg, #3bb2b8 10%, #42e695 90%);
+      color: #fff;
+      border-color: #1e7a62;
+    }
+    .side-buttons .imagem-tabela {
+      background: linear-gradient(90deg, #ff343c 20%, #ff6348 90%);
+      color: #fff;
+      box-shadow: 0 2px 10px 0 rgba(220,60,60,0.12);
+      border: 2px solid #e53935;
+      margin-top: 5px;
+    }
+    .side-buttons .imagem-tabela:hover {
+      background: linear-gradient(90deg, #ff6348 10%, #ff343c 90%);
+      color: #fff;
+      border-color: #ab2021;
+    }
+    .buttons {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin: 34px 0 20px 0;
+      align-items: center;
+    }
+    .buttons button {
+      width: 420px;
+      padding: 15px 0;
+      background: linear-gradient(90deg, #4f93ff 10%, #74d6ff 90%);
+      color: #fff;
+      font-size: 20px;
+      border: none;
+      border-radius: 7px;
+      box-shadow: 0 2px 10px 0 rgba(0,153,255,0.08);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      margin: 0 auto;
+      transition: background 0.3s, color 0.2s, box-shadow 0.2s;
+    }
+    .buttons button:hover {
+      background: linear-gradient(90deg, #2699fb 10%, #88f7fa 90%);
+      color: #292929;
+      box-shadow: 0 5px 25px 0 rgba(0,153,255,0.15);
+    }
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+        gap: 20px;
+      }
+      textarea, .output-column {
+        min-width: 0;
+        width: 100%;
+      }
+      .output-markdown {
+        min-width: 0;
+      }
+      .buttons button {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Extrator de Títulos H2 (<b>##</b>) para Excel e Markdown</h1>
+    <div class="layout">
+      <textarea id="inputText" placeholder="Cole o texto aqui..."></textarea>
+      <div class="output-column">
+        <textarea id="outputTitles" class="output-markdown" readonly aria-label="Títulos em markdown"></textarea>
+        <div class="side-buttons">
+          <button class="copiar-lista" id="btnCopiarMarkdown">COPIAR LISTA</button>
+          <a class="imagem-tabela" href="https://www.perplexity.ai/spaces/agente-de-imagens-.jovR5xcTPaSlAb1NNi6Iw"
+             target="_blank" rel="noopener noreferrer">PERPLEXITY: AGENTE DE IMAGEM E TABELA</a>
+        </div>
+      </div>
+    </div>
+    <div class="buttons">
+      <button id="btnGerar">GERAR EXCEL E MARKDOWN</button>
+    </div>
+  </div>
+
+  <script>
+    function exportarParaExcelEmPartes(texto, limite = 20) {
+      const linhas = texto.split('\n');
+      let titulos = [];
+      let conteudos = [];
+      let tituloAtual = "", conteudoAtual = "";
+
+      linhas.forEach(linha => {
+        const linhaTrimmed = linha.trim();
+        if (linhaTrimmed.startsWith('##')) {
+          if (tituloAtual) {
+            titulos.push(tituloAtual);
+            conteudos.push(conteudoAtual.trim());
+            conteudoAtual = "";
+          }
+          tituloAtual = linhaTrimmed.substring(2).trim();
+        } else if (tituloAtual.length > 0) {
+          conteudoAtual += linhaTrimmed + ' ';
+        }
+      });
+      // Push o último título e conteúdo
+      if (tituloAtual) {
+        titulos.push(tituloAtual);
+        conteudos.push(conteudoAtual.trim());
+      }
+      // Salvar em múltiplos arquivos (partes de até 'limite' títulos)
+      for (let i = 0; i < titulos.length; i += limite) {
+        const dados = [["title", "input"]];
+        for (let j = i; j < Math.min(i + limite, titulos.length); j++) {
+          dados.push([titulos[j], conteudos[j]]);
+        }
+        const ws = XLSX.utils.aoa_to_sheet(dados);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Títulos");
+        const partNum = Math.floor(i / limite) + 1;
+        const totalParts = Math.ceil(titulos.length / limite);
+        XLSX.writeFile(wb, `titulos_${partNum}de${totalParts}.xlsx`);
+      }
+    }
+
+    function extrairTitulosPorLinha(texto) {
+      const linhas = texto.split('\n');
+      const titulos = [];
+      linhas.forEach(linha => {
+        if (linha.trim().startsWith('##')) {
+          const tituloLimpo = linha.trim()
+            .replace(/^##\s*/, '')
+            .replace(/^\d+\.\s*/, '');
+          titulos.push(tituloLimpo);
+        }
+      });
+      return titulos;
+    }
+
+    function gerarMarkdown(titulos) {
+      // Apenas retorna os títulos, um por linha, sem "##"
+      return titulos.join('\n');
+    }
+
+    document.getElementById('btnGerar').addEventListener('click', () => {
+      const texto = document.getElementById('inputText').value;
+      exportarParaExcelEmPartes(texto, 20);
+      const titulos = extrairTitulosPorLinha(texto);
+      const markdown = gerarMarkdown(titulos);
+      document.getElementById('outputTitles').value = markdown;
+    });
+
+    document.getElementById('btnCopiarMarkdown').addEventListener('click', () => {
+      const markdown = document.getElementById('outputTitles').value;
+      if (!markdown) {
+        alert('Não há lista para copiar. Gere a lista primeiro.');
+        return;
+      }
+      navigator.clipboard.writeText(markdown)
+        .then(() => alert('Lista copiada para a área de transferência!'))
+        .catch(() => alert('Falha ao copiar a lista.'));
+    });
+  </script>
+</body>
+</html>
